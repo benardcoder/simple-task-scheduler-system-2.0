@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Scheduler</title>
+    <!-- Link to Task Scheduler CSS -->
+    <link rel="stylesheet" href="task-scheduler.css">
+</head>
+<body>
+    <h2>Task Scheduler</h2>
+    <p>Manage your tasks by adding and scheduling them. Tasks will be visible in the <strong>My Tasks</strong> section.</p>
+
+    <form id="task-form">
+        <label for="task-title">Task:</label>
+        <input type="text" id="task-title" placeholder="Enter task title" required>
+        
+        <label for="task-date">Date:</label>
+        <input type="date" id="task-date" required>
+        
+        <label for="task-time">Time:</label>
+        <input type="time" id="task-time" required>
+        
+        <button type="submit">Add Task</button>
+    </form>
+
+    <p><strong>Note:</strong> Tasks added here will appear in the <a href="#" onclick="loadPage('my-tasks')">My Tasks</a> section.</p>
+
+    <!-- Link to Task Scheduler JavaScript -->
+    <script src="task-scheduler.js"></script>
+</body>
+</html>

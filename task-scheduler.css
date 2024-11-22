@@ -1,0 +1,99 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #ecf0f1;
+    color: #2c3e50;
+    padding: 20px;
+}
+
+/* Task Scheduler Section */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+
+p {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+/* Form Styling */
+form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+form label {
+    flex: 1 1 100%;
+    font-weight: bold;
+    text-align: center;
+}
+
+form input {
+    flex: 1 1 300px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 1rem;
+}
+
+form button {
+    flex: 1 1 auto;
+    padding: 10px 20px;
+    background-color: #1abc9c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+}
+
+form button:hover {
+    background-color: #16a085;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    form input, form button {
+        flex: 1 1 100%;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    p {
+        font-size: 0.9rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    form {
+        gap: 10px;
+    }
+
+    form input, form button {
+        font-size: 0.9rem;
+    }
+}

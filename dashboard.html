@@ -7,24 +7,147 @@
     <link rel="stylesheet" href="dashboard.css">
 </head>
 <body>
-    <div class="dashboard">
-        <aside class="sidebar">
-            <nav>
+    <div class="dashboard-container">
+        <!-- Sidebar for Navigation -->
+        <nav class="sidebar">
+            <h2>Dashboard</h2>
+            <ul>
+                <li><a href="#" onclick="openSection('taskScheduler')">Task Scheduler</a></li>
+                <li><a href="#" onclick="openSection('rewards')">Daily Rewards</a></li>
+                <li><a href="#" onclick="openSection('myTasks')">My Tasks</a></li>
+                <li><a href="#" onclick="openSection('settings')">Settings</a></li>
+                <li><a href="#" onclick="openSection('profile')">Profile</a></li>
+                <li><a href="#" onclick="openSection('shop')">Shop</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="content-area">
+            <!-- Task Scheduler Section -->
+            <section id="taskScheduler" class="section active">
+                <h2>Task Scheduler</h2>
+                <form id="taskForm">
+                    <label for="task">Task</label>
+                    <input type="text" id="task" required>
+                    
+                    <label for="dueDate">Due Date and Time</label>
+                    <input type="datetime-local" id="dueDate" required>
+                    
+                    <button type="submit">Add Task</button>
+                </form>
+                <ul id="taskList"></ul>
+            </section>
+
+            <!-- My Tasks Section -->
+            <section id="myTasks" class="section">
+                <h2>My Tasks</h2>
+                <div class="task-categories">
+                    <button onclick="filterTasks('inProgress')">In Progress</button>
+                    <button onclick="filterTasks('completed')">Completed</button>
+                    <button onclick="filterTasks('deleted')">Deleted</button>
+                </div>
+                <ul id="taskCategoryList"></ul>
+            </section>
+
+            <!-- Daily Rewards Section -->
+            <section id="rewards" class="section">
+                <h2>Daily Rewards</h2>
+                <p>Log in each day for rewards! Daily bonuses unlock themes, tasks, and points.</p>
+                <button onclick="claimDailyReward()">Claim Today’s Reward</button>
+                <table>
+                    <tr>
+                        <th>Day</th>
+                        <th>Reward Points</th>
+                    </tr>
+                    <tr>
+                        <td>Monday</td>
+                        <td>10</td>
+                    </tr>
+                    <tr>
+                        <td>Tuesday</td>
+                        <td>15</td>
+                    </tr>
+                    <tr>
+                        <td>Wednesday</td>
+                        <td>20</td>
+                    </tr>
+                    <tr>
+                        <td>Thursday</td>
+                        <td>25</td>
+                    </tr>
+                    <tr>
+                        <td>Friday</td>
+                        <td>30</td>
+                    </tr>
+                    <tr>
+                        <td>Saturday</td>
+                        <td>35</td>
+                    </tr>
+                    <tr>
+                        <td>Sunday</td>
+                        <td>40</td>
+                    </tr>
+                </table>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section">
+                <h2>Settings</h2>
                 <ul>
-                    <li><a href="#" onclick="loadPage('task-scheduler')">Task Scheduler</a></li>
-                    <li><a href="#" onclick="loadPage('rewards')">Rewards</a></li>
-                    <li><a href="#" onclick="loadPage('my-tasks')">My Tasks</a></li>
-                    <li><a href="#" onclick="loadPage('settings')">Settings</a></li>
-                    <li><a href="#" onclick="loadPage('profile')">Profile</a></li>
-                    <li><a href="#" onclick="loadPage('shop')">Shop</a></li>
+                    <li><a href="#themes" onclick="openSettingsPage('themes')">Themes</a></li>
+                    <li><a href="#notifications" onclick="openSettingsPage('notifications')">Notifications</a></li>
+                    <li><a href="#about" onclick="openSettingsPage('about')">About</a></li>
                 </ul>
-            </nav>
-        </aside>
-        <main id="content-area">
-            <h1>Welcome to Task Scheduler</h1>
-            <p>Select a section from the sidebar to get started.</p>
-        </main>
+            </section>
+
+            <!-- Themes Subsection -->
+            <section id="themes" class="section hidden">
+                <h2>Theme Settings</h2>
+                <p>Select a theme for your dashboard:</p>
+                <ul>
+                    <li>Dark Theme</li>
+                    <li>Light Theme</li>
+                    <li>Blue Theme</li>
+                </ul>
+            </section>
+
+            <!-- Notifications Subsection -->
+            <section id="notifications" class="section hidden">
+                <h2>Notifications Settings</h2>
+                <p>Toggle notifications:</p>
+                <button onclick="toggleNotifications()">Enable</button>
+                <button onclick="toggleNotifications()">Disable</button>
+            </section>
+
+            <!-- About Subsection -->
+            <section id="about" class="section hidden">
+                <h2>About</h2>
+                <p>This dashboard is designed for efficient task scheduling and tracking with a gamified experience.</p>
+                <p>Contact us at: <a href="mailto:support@example.com">support@example.com</a></p>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="section">
+                <h2>Profile</h2>
+                <div>
+                    <label for="profileImage">Upload Profile Image:</label>
+                    <input type="file" id="profileImage" accept="image/*">
+                </div>
+            </section>
+
+            <!-- Shop Section -->
+            <section id="shop" class="section">
+                <h2>Shop</h2>
+                <p>Use your reward points to unlock themes:</p>
+                <ul>
+                    <li>Dark Theme - 50 points</li>
+                    <li>Light Theme - 30 points</li>
+                    <li>Blue Theme - 40 points</li>
+                </ul>
+            </section>
+        </div>
     </div>
+
     <script src="dashboard.js"></script>
 </body>
 </html>
