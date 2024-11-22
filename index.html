@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link rel="stylesheet" href="login.css">
+</head>
+<body>
+    <div class="login-container">
+        <form id="authForm" class="login-form">
+            <h1>Login</h1>
+            <div class="form-group">
+                <input type="text" id="username" placeholder="Username">
+                <div id="usernameError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <input type="password" id="password" placeholder="Password">
+                <div id="passwordError" class="error-message"></div>
+            </div>
+            <div class="form-group">
+                <label>
+                    <input type="checkbox" id="rememberMe"> Remember Me
+                </label>
+            </div>
+            <button type="submit" class="btn">Login</button>
+        </form>
+
+        <p class="additional-links">
+            <a href="forgot.html" class="Link">Forgot Password?</a>
+        </p>
+        <p class="additional-links">
+            Don't have an account? <a href="register.html" class="link">Register</a>
+        </p>
+    </div>
+    <script src="login.js"></script>
+</body>
+</html>
