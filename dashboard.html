@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Scheduler Dashboard</title>
+    <link rel="stylesheet" href="dashboard.css">
+</head>
+<body>
+    <div class="dashboard">
+        <aside class="sidebar">
+            <nav>
+                <ul>
+                    <li><a href="#" onclick="loadPage('task-scheduler')">Task Scheduler</a></li>
+                    <li><a href="#" onclick="loadPage('rewards')">Rewards</a></li>
+                    <li><a href="#" onclick="loadPage('my-tasks')">My Tasks</a></li>
+                    <li><a href="#" onclick="loadPage('settings')">Settings</a></li>
+                    <li><a href="#" onclick="loadPage('profile')">Profile</a></li>
+                    <li><a href="#" onclick="loadPage('shop')">Shop</a></li>
+                </ul>
+            </nav>
+        </aside>
+        <main id="content-area">
+            <h1>Welcome to Task Scheduler</h1>
+            <p>Select a section from the sidebar to get started.</p>
+        </main>
+    </div>
+    <script src="dashboard.js"></script>
+</body>
+</html>
