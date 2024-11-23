@@ -12,7 +12,6 @@ function openSection(sectionId) {
 // Task Scheduler - Add task functionality
 const taskForm = document.getElementById('taskForm');
 const taskList = document.getElementById('taskList');
-const allTasks = []; // Array to store all tasks
 
 taskForm.addEventListener('submit', function(event) {
     event.preventDefault();
@@ -21,66 +20,24 @@ taskForm.addEventListener('submit', function(event) {
     const dueDateInput = document.getElementById('dueDate');
 
     const taskData = {
-        id: Date.now(), // Unique ID for each task
         task: taskInput.value,
-        dueDate: dueDateInput.value,
-        status: 'In Progress' // Default status
+        dueDate: dueDateInput.value
     };
 
-    allTasks.push(taskData); // Store task in the array
-    renderTasks('In Progress'); // Render tasks based on the default category
+    const taskItem = document.createElement('li');
+    taskItem.textContent = 'Task: ${taskData.task} | Due: ${new Date(taskData.dueDate).toLocaleString()}';
+
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.classList.add('delete-btn');
+    deleteButton.addEventListener('click', () => taskItem.remove());
+
+    taskItem.appendChild(deleteButton);
+    taskList.appendChild(taskItem);
 
     taskInput.value = '';
     dueDateInput.value = '';
 });
-
-// Function to render tasks based on category
-function renderTasks(status) {
-    const taskCategoryList = document.getElementById('taskCategoryList');
-    taskCategoryList.innerHTML = ''; // Clear previous list
-
-    const filteredTasks = allTasks.filter(task => task.status === status);
-
-    if (filteredTasks.length === 0) {
-        'taskCategoryList.textContent = No tasks found for ${status}.';
-        return;
-    }
-
-    filteredTasks.forEach(task => {
-        const taskItem = document.createElement('li');
-        'taskItem.textContent = Task: ${task.task} | Due: ${new Date(task.dueDate).toLocaleString()}';
-
-        // Mark as Completed button
-        if (status === 'In Progress') {
-            const completeButton = document.createElement('button');
-            completeButton.textContent = 'Mark as Completed';
-            completeButton.classList.add('complete-btn');
-            completeButton.addEventListener('click', () => {
-                task.status = 'Completed';
-                renderTasks('In Progress');
-            });
-            taskItem.appendChild(completeButton);
-        }
-
-        // Delete button
-        const deleteButton = document.createElement('button');
-        deleteButton.textContent = 'Delete';
-        deleteButton.classList.add('delete-btn');
-        deleteButton.addEventListener('click', () => {
-            task.status = 'Deleted';
-            renderTasks(status);
-        });
-        taskItem.appendChild(deleteButton);
-
-        taskCategoryList.appendChild(taskItem);
-    });
-}
-
-// Event listeners for filtering tasks by category
-function filterTasks(category) {
-    alert('Filtering tasks by category: ${category}');
-    renderTasks(category);
-}
 
 // Theme selection
 const themeButtons = document.querySelectorAll('.theme-button');
