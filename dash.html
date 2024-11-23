@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Scheduler Dashboard</title>
+    <link rel="stylesheet" href="dash.css">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar for Navigation -->
+        <nav class="sidebar">
+            <h2>Dashboard</h2>
+            <ul>
+                <li><a href="#" onclick="openSection('taskScheduler')">Task Scheduler</a></li>
+                <li><a href="#" onclick="openSection('rewards')">Daily Rewards</a></li>
+                <li><a href="#" onclick="openSection('myTasks')">My Tasks</a></li>
+                <li><a href="#" onclick="openSection('settings')">Settings</a></li>
+                <li><a href="#" onclick="openSection('profile')">Profile</a></li>
+                <li><a href="#" onclick="openSection('shop')">Shop</a></li>
+            </ul>
+        </nav>
+
+        <!-- Main Content Area -->
+        <div class="content-area">
+            <!-- Task Scheduler Section -->
+            <section id="taskScheduler" class="section active">
+                <h2>Task Scheduler</h2>
+                <form id="taskForm">
+                    <label for="task">Task</label>
+                    <input type="text" id="task" required>
+                    
+                    <label for="dueDate">Due Date and Time</label>
+                    <input type="datetime-local" id="dueDate" required>
+                    
+                    <button type="submit">Add Task</button>
+                </form>
+                <ul id="taskList"></ul>
+            </section>
+
+            <!-- My Tasks Section -->
+            <section id="myTasks" class="section active">
+                <h2>My Tasks</h2>
+                <div class="task-categories">
+                    <button onclick="filterTasks('inProgress')">In Progress</button>
+                    <button onclick="filterTasks('completed')">Completed</button>
+                    <button onclick="filterTasks('deleted')">Deleted</button>
+                </div>
+                <ul id="taskCategoryList"></ul>
+            </section>
+
+            <!-- Daily Rewards Section -->
+            <section id="rewards" class="section active">
+                <h2>Daily Rewards</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Day</th>
+                            <th>Reward Points</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Day 1</td><td>10 Points</td></tr>
+                        <tr><td>Day 2</td><td>20 Points</td></tr>
+                        <tr><td>Day 3</td><td>30 Points</td></tr>
+                        <tr><td>Day 4</td><td>40 Points</td></tr>
+                        <tr><td>Day 5</td><td>50 Points</td></tr>
+                        <tr><td>Day 6</td><td>60 Points</td></tr>
+                        <tr><td>Day 7</td><td>100 Points</td></tr>
+                    </tbody>
+                </table>
+                <button onclick="claimDailyReward()">Claim Daily Reward</button>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="settings" class="section active">
+                <h2>Settings</h2>
+                <form id="settingsForm">
+                    <label>Theme</label>
+                    <div>
+                        <button type="button" class="theme-button" data-theme="default">Default Theme</button>
+                        <button type="button" class="theme-button" data-theme="dark">Dark Theme</button>
+                        <button type="button" class="theme-button" data-theme="light">Light Theme</button>
+                        <button type="button" class="theme-button" data-theme="blue">Blue Theme</button>
+                        <button type="button" class="theme-button" data-theme="green">Green Theme</button>
+                    </div>
+                    
+                    <label>Notifications</label>
+                    <input type="checkbox" id="notificationsToggle" checked>
+                    <button type="button" onclick="toggleNotifications()">Toggle Notifications</button>
+                    
+                    <button type="button" onclick="saveSettings()">Save Settings</button>
+                </form>
+                <h3>About Us</h3>
+                <p>This dashboard is designed for efficient task scheduling and tracking with a gamified experience.</p>
+                <h3>Contact</h3>
+                <p>Email: support@example.com</p>
+            </section>
+
+            <!-- Profile Section -->
+            <section id="profile" class="section active">
+                <h2>Profile</h2>
+                <div class="profile-info">
+                    <h3>Username: <span id="usernameDisplay">User123</span></h3>
+                    <p>Points: <span id="pointsDisplay">0</span></p>
+                </div>
+                <div class="avatar-section">
+                    <h3>Avatar</h3>
+                    <img src="avatar1.png" alt="Avatar 1" class="avatar">
+                    <img src="avatar2.png" alt="Avatar 2" class="avatar">
+                    <img src="avatar3.png" alt="Avatar 3" class="avatar">
+                    <img src="avatar4.png" alt="Avatar 4" class="avatar">
+                </div>
+            </section>
+
+            <!-- Shop Section -->
+            <section id="shop" class="section active">
+                <h2>Shop</h2>
+                <p>Buy themes and rewards with your points!</p>
+                <div class="theme-shop">
+                    <div class="theme-item">
+                        <img src="theme1.jpg" alt="Theme 1">
+                        <button onclick="buyTheme('blue')">Buy Blue Theme</button>
+                    </div>
+                    <div class="theme-item">
+                        <img src="theme2.jpg" alt="Theme 2">
+                        <button onclick="buyTheme('green')">Buy Green Theme</button>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <script src="dash.js"></script>
+</body>
+</html>

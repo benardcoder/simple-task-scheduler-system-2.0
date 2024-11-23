@@ -1,0 +1,257 @@
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Body Styling */
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: #f7f9fc;
+    color: #333;
+    line-height: 1.6;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 250px;
+    background-color: #1abc9c;
+    padding: 20px;
+    border-radius: 5px;
+    color: white;
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100%;
+}
+
+.sidebar h2 {
+    font-size: 1.5rem;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    margin: 10px 0;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    font-size: 1rem;
+    padding: 10px 15px;
+    display: block;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.sidebar ul li a:hover {
+    background-color: #16a085;
+}
+
+/* Content Area */
+.content-area {
+    margin-left: 270px;
+    padding: 20px;
+    flex-grow: 1;
+}
+
+h2 {
+    color: #333;
+}
+
+button {
+    background-color: #1abc9c;
+    color: white;
+    padding: 10px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+}
+
+button:hover {
+    background-color: #16a085;
+}
+
+/* Task Scheduler Section */
+#taskScheduler form {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+}
+
+#taskScheduler input {
+    margin-bottom: 10px;
+    padding: 10px;
+    font-size: 1rem;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+#taskList {
+    list-style: none;
+    padding: 0;
+}
+
+#taskList li {
+    padding: 10px;
+    background-color: #fff;
+    margin-bottom: 10px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+}
+
+#taskList button {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    padding: 5px 10px;
+    font-size: 0.9rem;
+}
+
+#taskList button:hover {
+    background-color: #c0392b;
+}
+
+/* Rewards Section */
+table {
+    width: 100%;
+    margin-top: 20px;
+    border-collapse: collapse;
+}
+
+table th, table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+}
+
+/* Theme Buttons */
+.theme-button {
+    background-color: #1abc9c;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin: 5px;
+}
+
+.theme-button:hover {
+    background-color: #16a085;
+}
+
+/* Avatar Section */
+.avatar-section {
+    margin-top: 20px;
+}
+
+.avatar-section img {
+    width: 50px;
+    height: 50px;
+    margin: 5px;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.avatar-section img:hover {
+    border: 2px solid #1abc9c;
+}
+
+/* Theme & Settings Section */
+#settings .theme-button {
+    margin-bottom: 10px;
+}
+
+/* Shop Section */
+.theme-item {
+    margin-top: 10px;
+    display: inline-block;
+    width: 120px;
+    text-align: center;
+}
+
+.theme-item img {
+    width: 100%;
+    border-radius: 5px;
+}
+
+/* Active Section */
+.section {
+    display: none;
+}
+
+.section.active {
+    display: block;
+}
+
+/* Responsive Design */
+@media screen and (max-width: 768px) {
+    .sidebar {
+        width: 100%;
+        padding: 15px;
+    }
+
+    .content-area {
+        margin-left: 0;
+    }
+
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .sidebar ul li a {
+        padding: 8px;
+        font-size: 1rem;
+    }
+
+    button {
+        padding: 8px;
+    }
+
+    #taskScheduler form {
+        width: 100%;
+    }
+
+    #taskScheduler input {
+        width: 100%;
+    }
+
+    table th, table td {
+        font-size: 0.9rem;
+    }
+
+    .theme-item img {
+        max-width: 90px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    h2 {
+        font-size: 1.2rem;
+    }
+
+    .sidebar h2 {
+        font-size: 1.2rem;
+    }
+
+    .sidebar ul li a {
+        font-size: 0.9rem;
+    }
+
+    button {
+        padding: 6px;
+    }
+}
