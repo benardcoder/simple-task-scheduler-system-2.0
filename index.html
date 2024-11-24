@@ -3,36 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login Form</title>
-    <link rel="stylesheet" href="login.css">
+    <title>User System</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <div class="login-container">
-        <form id="authForm" class="login-form">
-            <h1>Login</h1>
-            <div class="form-group">
-                <input type="text" id="username" placeholder="Username">
-                <div id="usernameError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <input type="password" id="password" placeholder="Password">
-                <div id="passwordError" class="error-message"></div>
-            </div>
-            <div class="form-group">
-                <label>
-                    <input type="checkbox" id="rememberMe"> Remember Me
-                </label>
-            </div>
-            <button type="submit" class="btn">Login</button>
-        </form>
+    <div class="container">
+        <!-- Signup Form -->
+        <div id="signupForm" class="form-container">
+            <h2>Signup Form</h2>
+            <form action="signup.php" method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="email" name="email" placeholder="Email" required>
+                <input type="password" name="password" placeholder="Password (min 4 characters)" minlength="4" required>
+                <button type="submit">Sign Up</button>
+            </form>
+            <p>Already have an account? <a href="#" onclick="showLogin()">Login</a></p>
+        </div>
 
-        <p class="additional-links">
-            <a href="forgot.html" class="Link">Forgot Password?</a>
-        </p>
-        <p class="additional-links">
-            Don't have an account? <a href="registration.html" class="link">Register</a>
-        </p>
+        <!-- Login Form -->
+        <div id="loginForm" class="form-container hidden">
+            <h2>Login Form</h2>
+            <form action="login.php" method="POST">
+                <input type="text" name="username" placeholder="Username" required>
+                <input type="password" name="password" placeholder="Password" required>
+                <div>
+                    <input type="checkbox" name="remember" id="remember">
+                    <label for="remember">Remember Me</label>
+                    
+                </div>
+                <button type="submit">Login</button>
+            </form>
+            <p><a href="#" onclick="showResetPassword()">Forgot Password?</a></p>
+            <p>Don't have an account? <a href="#" onclick="showSignup()">Sign Up</a></p>
+        </div>
+
+        <!-- Reset Password Form -->
+        <div id="resetForm" class="form-container hidden">
+            <h2>Reset Password</h2>
+            <form action="reset.php" method="POST">
+                <input type="email" name="email" placeholder="Email" required>
+                <button type="submit">Reset Password</button>
+            </form>
+            <p>Remember your password? <a href="#" onclick="showLogin()">Login</a></p>
+        </div>
     </div>
-    <script src="login.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>

@@ -1,0 +1,129 @@
+/* Reset default browser styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f4;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+/* Container for forms */
+.container {
+    width: 90%; /* Fluid width for smaller devices */
+    max-width: 400px; /* Limit maximum width for larger screens */
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* Form heading */
+h2 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1.5rem;
+    color: #333;
+}
+
+/* Input fields */
+input {
+    width: 100%;
+    padding: 12px 15px;
+    margin-bottom: 15px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 1rem;
+}
+
+/* Remember me checkbox container */
+div {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+/* Submit buttons */
+button {
+    width: 100%;
+    padding: 12px;
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background: #0056b3;
+}
+
+/* Paragraph text (for links) */
+p {
+    text-align: center;
+    font-size: 0.9rem;
+    color: #666;
+}
+
+p a {
+    color: #007bff;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+p a:hover {
+    text-decoration: underline;
+}
+
+/* Hidden class for toggling visibility */
+.hidden {
+    display: none;
+}
+
+/* Responsive Design: Adjust for small screens */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+
+    h2 {
+        font-size: 1.25rem;
+    }
+
+    input, button {
+        font-size: 0.9rem;
+    }
+
+    p {
+        font-size: 0.85rem;
+    }
+
+    div {
+        font-size: 0.9rem;
+    }
+}
+
+/* Styling for the Remember Me checkbox */
+input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+label {
+    font-size: 1rem;
+    color: #555;
+}
+
+@media (max-width: 480px) {
+    /* For very small screens, reduce input and button sizes slightly */
+    input, button {
+        font-size: 0.8rem;
+    }
+}
