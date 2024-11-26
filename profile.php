@@ -36,7 +36,7 @@ $badges = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <body>
     <div class="dashboard-container">
     
-        
+    <?php include 'sidebar.php'; ?>
         <div class="main-content">
             <div class="profile-header">
                 <h1><i class="fas fa-user-circle"></i> My Profile</h1>

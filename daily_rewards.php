@@ -54,7 +54,7 @@ $rewards = [
 <body>
     <div class="dashboard-container">
         
-        
+    <?php include 'sidebar.php'; ?>
         <div class="main-content">
             <div class="rewards-header">
                 <h1><i class="fas fa-gift"></i> Daily Rewards</h1>

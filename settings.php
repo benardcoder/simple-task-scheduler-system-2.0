@@ -24,7 +24,7 @@ $settings = getUserSettings($pdo, $_SESSION['user_id']);
 <body>
     <div class="dashboard-container">
         
-        
+    <?php include 'sidebar.php'; ?>
         <div class="main-content">
             <div class="settings-header">
                 <h1><i class="fas fa-cog"></i> Settings</h1>

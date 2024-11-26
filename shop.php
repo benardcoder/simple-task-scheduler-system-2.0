@@ -28,7 +28,7 @@ $shopItems = getShopItems($pdo);
 </head>
 <body>
     <div class="dashboard-container">
-        
+    <?php include 'sidebar.php'; ?> 
         
         <div class="main-content">
             <div class="content-header">
