@@ -1,58 +1,40 @@
 <?php
 session_start();
-$conn = new mysqli("localhost", "root", "", "user_system");
+require_once 'config.php';
 
-// Check the database connection
-if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = $_POST['username'];
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $username = trim($_POST['username']);
     $password = $_POST['password'];
+    
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+        $stmt->execute([$username]);
+        $user = $stmt->fetch();
 
-    // Check if the Remember Me checkbox is checked
-    $remember = isset($_POST['remember']) ? true : false;
-
-    // Query the database to get the user details based on the provided username
-    $stmt = $conn->prepare("SELECT id, password FROM users WHERE username=?");
-    $stmt->bind_param("s", $username);
-    $stmt->execute();
-    $stmt->bind_result($id, $hashed_password);
-
-    // Check if the user was found
-    if ($stmt->fetch()) {
-        // Verify the entered password against the stored hashed password
-        if (password_verify($password, $hashed_password)) {
-            // Password is correct, proceed with login
-
-            // Create session for the user
-            $_SESSION['user_id'] = $id;
-            $_SESSION['username'] = $username;
-
-            // If Remember Me is checked, set a cookie for 30 days
-            if ($remember) {
-                $cookie_name = "user";
-                $cookie_value = $username . "|" . $id;
-                setcookie($cookie_name, $cookie_value, time() + (86400 * 30), "/"); // Cookie expires in 30 days
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['username'] = $user['username'];
+            
+            if (isset($_POST['remember'])) {
+                // Set cookie for 30 days
+                setcookie('user_login', $user['username'], time() + (86400 * 30), "/");
             }
-
-            // Redirect to the dashboard page
+            
+            $_SESSION['message'] = "Welcome back, " . htmlspecialchars($username) . "!";
+            $_SESSION['message_type'] = "success";
             header("Location: dashboard.php");
             exit();
         } else {
-            // Password does not match
-            echo "<script>
-                    alert('Wrong username or password!');
-                    window.location.href = 'index.html'; // Redirect back to the login page
-                  </script>";
+            $_SESSION['message'] = "Invalid username or password";
+            $_SESSION['message_type'] = "error";
+            header("Location: index.php");
+            exit();
         }
-    } else {
-        // Username not found in the database
-        echo "<script>
-                alert('Wrong username or password!');
-                window.location.href = 'index.html'; // Redirect back to the login page
-              </script>";
+    } catch(PDOException $e) {
+        $_SESSION['message'] = "Error: " . $e->getMessage();
+        $_SESSION['message_type'] = "error";
+        header("Location: index.php");
+        exit();
     }
 }
 ?>

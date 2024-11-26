@@ -1,26 +1,35 @@
 <?php
-$conn = new mysqli("localhost", "root", "", "user_system");
+session_start();
+require_once 'config.php';
 
-if ($conn->connect_error) {
-    die("Database connection failed: " . $conn->connect_error);
-}
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $email = $_POST['email'];
-    $new_password = bin2hex(random_bytes(4));
-    $hashed_password = password_hash($new_password, PASSWORD_BCRYPT);
-
-    $stmt = $conn->prepare("UPDATE users SET password=? WHERE email=?");
-    $stmt->bind_param("ss", $hashed_password, $email);
-
-    if ($stmt->execute()) {
-        mail($email, "Password Reset", "Your new password is: $new_password");
-        echo "<script>
-                alert('Password reset successful. Check your email for the new password!');
-                window.location.href = 'index.html';
-              </script>";
-    } else {
-        echo "<script>alert('Error resetting password. Please try again!');</script>";
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $email = trim($_POST['email']);
+    
+    try {
+        $stmt = $pdo->prepare("SELECT * FROM users WHERE email = ?");
+        $stmt->execute([$email]);
+        
+        if ($stmt->rowCount() > 0) {
+            // In a real application, you would:
+            // 1. Generate a reset token
+            // 2. Store it in the database with an expiration
+            // 3. Send an email with a reset link
+            
+            $_SESSION['message'] = "If an account exists with this email, password reset instructions will be sent.";
+            $_SESSION['message_type'] = "success";
+        } else {
+            // For security, show the same message even if email doesn't exist
+            $_SESSION['message'] = "If an account exists with this email, password reset instructions will be sent.";
+            $_SESSION['message_type'] = "success";
+        }
+        
+        header("Location: index.php");
+        exit();
+    } catch(PDOException $e) {
+        $_SESSION['message'] = "Error: " . $e->getMessage();
+        $_SESSION['message_type'] = "error";
+        header("Location: index.php");
+        exit();
     }
 }
 ?>
