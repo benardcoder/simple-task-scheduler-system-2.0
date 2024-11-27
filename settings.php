@@ -8,8 +8,30 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Get user settings
-$settings = getUserSettings($pdo, $_SESSION['user_id']);
+// Handle form submissions
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (isset($_POST['change_password'])) {
+        // Handle password change
+        $newPassword = $_POST['new_password'];
+        $confirmPassword = $_POST['confirm_password'];
+
+        if ($newPassword === $confirmPassword) {
+            $hashedPassword = password_hash($newPassword, PASSWORD_BCRYPT);
+            $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+            $stmt->execute([$hashedPassword, $_SESSION['user_id']]);
+            setMessage('success', 'Password changed successfully.');
+        } else {
+            setMessage('error', 'Passwords do not match.');
+        }
+    } elseif (isset($_POST['delete_account'])) {
+        // Handle account deletion
+        $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->execute([$_SESSION['user_id']]);
+        session_destroy();
+        header("Location: index.php");
+        exit();
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -18,136 +40,131 @@ $settings = getUserSettings($pdo, $_SESSION['user_id']);
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Settings - Task Manager</title>
-    <link rel="stylesheet" href="settings.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* Add styles for light and dark themes */
+        body.light-theme {
+            background-color: #f4f4f9;
+            color: #333;
+        }
+        body.dark-theme {
+            background-color: #333;
+            color: #f4f4f9;
+        }
+        .settings-container {
+            max-width: 800px;
+            margin: 20px auto;
+            padding: 20px;
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .settings-section {
+            margin-bottom: 20px;
+        }
+        .settings-section h2 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+            color: #007bff;
+        }
+        .settings-section button, .settings-section input[type="submit"] {
+            margin-top: 10px;
+            padding: 10px 20px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+        }
+        .btn-primary {
+            background: #007bff;
+            color: white;
+        }
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+    </style>
 </head>
-<body>
+<body class="light-theme">
     <div class="dashboard-container">
+        <?php include 'sidebar.php'; ?>
         
-    <?php include 'sidebar.php'; ?>
         <div class="main-content">
-            <div class="settings-header">
-                <h1><i class="fas fa-cog"></i> Settings</h1>
-            </div>
-
-            <?php displayMessage(); ?>
-
             <div class="settings-container">
-                <!-- Appearance Settings -->
+                <h1><i class="fas fa-cog"></i> Settings</h1>
+
+                <?php displayMessage(); ?>
+
+                <!-- Theme Settings -->
                 <div class="settings-section">
-                    <h2><i class="fas fa-paint-brush"></i> Appearance</h2>
-                    <div class="settings-group">
-                        <label>Theme</label>
-                        <div class="theme-options">
-                            <button class="theme-btn <?php echo ($settings['theme'] ?? 'light') == 'light' ? 'active' : ''; ?>" 
-                                    data-theme="light">
-                                <i class="fas fa-sun"></i> Light
-                            </button>
-                            <button class="theme-btn <?php echo ($settings['theme'] ?? 'light') == 'dark' ? 'active' : ''; ?>" 
-                                    data-theme="dark">
-                                <i class="fas fa-moon"></i> Dark
-                            </button>
-                        </div>
-                    </div>
+                    <h2>Theme</h2>
+                    <button onclick="toggleTheme()" class="btn-primary">Toggle Theme</button>
                 </div>
 
                 <!-- Notification Settings -->
                 <div class="settings-section">
-                    <h2><i class="fas fa-bell"></i> Notifications</h2>
-                    <div class="settings-group">
-                        <label class="switch-label">
-                            <span>Email Notifications</span>
-                            <label class="switch">
-                                <input type="checkbox" id="emailNotifications" 
-                                       <?php echo ($settings['email_notifications'] ?? false) ? 'checked' : ''; ?>>
-                                <span class="slider round"></span>
-                            </label>
-                        </label>
-                    </div>
-                    <div class="settings-group">
-                        <label class="switch-label">
-                            <span>Task Reminders</span>
-                            <label class="switch">
-                                <input type="checkbox" id="taskReminders" 
-                                       <?php echo ($settings['task_reminders'] ?? false) ? 'checked' : ''; ?>>
-                                <span class="slider round"></span>
-                            </label>
-                        </label>
-                    </div>
+                    <h2>Notifications</h2>
+                    <label>
+                        <input type="checkbox" id="notificationsToggle" onchange="toggleNotifications()">
+                        Enable Notifications
+                    </label>
                 </div>
 
-                <!-- Privacy Settings -->
+                <!-- Task Reminders -->
                 <div class="settings-section">
-                    <h2><i class="fas fa-shield-alt"></i> Privacy</h2>
-                    <div class="settings-group">
-                        <label class="switch-label">
-                            <span>Show Profile to Others</span>
-                            <label class="switch">
-                                <input type="checkbox" id="profileVisibility" 
-                                       <?php echo ($settings['profile_visible'] ?? false) ? 'checked' : ''; ?>>
-                                <span class="slider round"></span>
-                            </label>
-                        </label>
-                    </div>
+                    <h2>Task Reminders</h2>
+                    <label>
+                        <input type="checkbox" id="remindersToggle" onchange="toggleReminders()">
+                        Enable Task Reminders
+                    </label>
                 </div>
 
-                <!-- Account Settings -->
+                <!-- Account Management -->
                 <div class="settings-section">
-                    <h2><i class="fas fa-user-cog"></i> Account</h2>
-                    <div class="settings-group">
-                        <button id="changePasswordBtn" class="btn-secondary">
-                            <i class="fas fa-key"></i> Change Password
-                        </button>
-                        <button id="deleteAccountBtn" class="btn-danger">
-                            <i class="fas fa-trash-alt"></i> Delete Account
-                        </button>
-                    </div>
+                    <h2>Account</h2>
+                    <form method="POST">
+                        <div>
+                            <label for="new_password">New Password</label>
+                            <input type="password" id="new_password" name="new_password" required>
+                        </div>
+                        <div>
+                            <label for="confirm_password">Confirm Password</label>
+                            <input type="password" id="confirm_password" name="confirm_password" required>
+                        </div>
+                        <input type="submit" name="change_password" value="Change Password" class="btn-primary">
+                    </form>
+                    <form method="POST" onsubmit="return confirm('Are you sure you want to delete your account?');">
+                        <input type="submit" name="delete_account" value="Delete Account" class="btn-danger">
+                    </form>
+                </div>
+
+                <!-- Privacy Policy -->
+                <div class="settings-section">
+                    <h2>Privacy</h2>
+                    <p>Your privacy is important to us. We do not share your data with third parties.</p>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Change Password Modal -->
-    <div id="passwordModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Change Password</h2>
-            <form id="changePasswordForm">
-                <div class="form-group">
-                    <label for="currentPassword">Current Password</label>
-                    <input type="password" id="currentPassword" name="currentPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="newPassword">New Password</label>
-                    <input type="password" id="newPassword" name="newPassword" required>
-                </div>
-                <div class="form-group">
-                    <label for="confirmPassword">Confirm New Password</label>
-                    <input type="password" id="confirmPassword" name="confirmPassword" required>
-                </div>
-                <button type="submit" class="btn-primary">Change Password</button>
-            </form>
-        </div>
-    </div>
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            document.body.classList.toggle('light-theme');
+        }
 
-    <!-- Delete Account Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>Delete Account</h2>
-            <p class="warning-text">
-                Are you sure you want to delete your account? This action cannot be undone.
-            </p>
-            <form id="deleteAccountForm">
-                <div class="form-group">
-                    <label for="deletePassword">Enter your password to confirm</label>
-                    <input type="password" id="deletePassword" name="password" required>
-                </div>
-                <button type="submit" class="btn-danger">Delete Account</button>
-            </form>
-        </div>
-    </div>
+        function toggleNotifications() {
+            const isEnabled = document.getElementById('notificationsToggle').checked;
+            alert('Notifications ' + (isEnabled ? 'enabled' : 'disabled'));
+            // Implement actual notification logic here
+        }
 
-    <script src="settings.js"></script>
+        function toggleReminders() {
+            const isEnabled = document.getElementById('remindersToggle').checked;
+            alert('Task reminders ' + (isEnabled ? 'enabled' : 'disabled'));
+            // Implement actual reminder logic here
+        }
+    </script>
 </body>
 </html>

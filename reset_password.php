@@ -1,49 +1,87 @@
 <?php
 session_start();
 require_once 'config.php';
-require_once 'EmailService.php';
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    try {
-        $email = trim($_POST['email']);
-        
-        if (empty($email)) {
-            throw new Exception('Email is required');
-        }
-        
-        // Verify email exists
-        $stmt = $pdo->prepare("SELECT id, username FROM users WHERE email = ?");
-        $stmt->execute([$email]);
-        $user = $stmt->fetch();
-        
-        if (!$user) {
-            throw new Exception('Email not found');
-        }
-        
-        // Generate new password
-        $newPassword = bin2hex(random_bytes(8)); // 16 characters
-        $hashedPassword = password_hash($newPassword, PASSWORD_DEFAULT);
-        
-        // Update password in database
-        $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE email = ?");
-        if ($stmt->execute([$hashedPassword, $email])) {
-            // Send password reset email
-            $emailService = new EmailService();
-            if ($emailService->sendPasswordResetEmail($email, $newPassword)) {
-                $_SESSION['success'] = 'New password has been sent to your email.';
-            } else {
-                throw new Exception('Failed to send password reset email');
-            }
-            
-            header('Location: login.php');
-            exit();
-        } else {
-            throw new Exception('Failed to reset password');
-        }
-        
-    } catch (Exception $e) {
-        $_SESSION['error'] = $e->getMessage();
-        header('Location: forgot_password.php');
-        exit();
-    }
+// Verify token
+if (!isset($_GET['token'])) {
+    $_SESSION['error'] = 'Invalid reset link';
+    header('Location: forgot_password.php');
+    exit();
 }
+
+$token = $_GET['token'];
+
+// Check if token exists and is valid
+$stmt = $pdo->prepare("
+    SELECT user_id 
+    FROM password_reset_tokens 
+    WHERE token = ? 
+    AND expires_at > NOW() 
+    AND used = 0
+");
+$stmt->execute([$token]);
+$result = $stmt->fetch();
+
+if (!$result) {
+    $_SESSION['error'] = 'Invalid or expired reset link';
+    header('Location: forgot_password.php');
+    exit();
+}
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-box">
+            <h2>Create New Password</h2>
+            
+            <?php if (isset($_SESSION['error'])): ?>
+                <div class="alert alert-error">
+                    <?php 
+                    echo $_SESSION['error'];
+                    unset($_SESSION['error']);
+                    ?>
+                </div>
+            <?php endif; ?>
+            
+            <form action="update_password.php" method="POST">
+                <input type="hidden" name="token" value="<?php echo htmlspecialchars($token); ?>">
+                
+                <div class="form-group">
+                    <label for="password">New Password</label>
+                    <input type="password" id="password" name="password" required 
+                           minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}">
+                    <small>Must be at least 8 characters with numbers and letters</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Confirm Password</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary">Update Password</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Password confirmation validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const password = document.getElementById('password').value;
+            const confirm = document.getElementById('confirm_password').value;
+            
+            if (password !== confirm) {
+                e.preventDefault();
+                alert('Passwords do not match!');
+            }
+        });
+    </script>
+</body>
+</html>

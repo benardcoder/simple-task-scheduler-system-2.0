@@ -8,38 +8,31 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-// Get user's last reward claim time and streak
-$stmt = $pdo->prepare("
-    SELECT points, last_reward_claim, reward_streak 
-    FROM users 
-    WHERE id = ?
-");
+// Fetch user data
+$stmt = $pdo->prepare("SELECT last_claimed, points FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
-$userData = $stmt->fetch(PDO::FETCH_ASSOC);
+$user = $stmt->fetch();
 
-// Check if reward is available
-$lastClaim = strtotime($userData['last_reward_claim'] ?? '2000-01-01');
-$now = time();
-$canClaim = ($now - $lastClaim) >= 86400; // 24 hours in seconds
-
-// Calculate streak
-$streakBroken = ($now - $lastClaim) >= (48 * 3600); // 48 hours for streak break
-if ($streakBroken) {
-    $streak = 0;
-} else {
-    $streak = $userData['reward_streak'] ?? 0;
+// Check if the user can claim today's reward
+$canClaim = false;
+$today = date('Y-m-d');
+if ($user['last_claimed'] !== $today) {
+    $canClaim = true;
 }
 
-// Define rewards for each day
-$rewards = [
-    1 => ['points' => 100, 'description' => 'Daily Login Bonus'],
-    2 => ['points' => 200, 'description' => 'Streak Bonus - Day 2'],
-    3 => ['points' => 300, 'description' => 'Streak Bonus - Day 3'],
-    4 => ['points' => 400, 'description' => 'Streak Bonus - Day 4'],
-    5 => ['points' => 500, 'description' => 'Streak Bonus - Day 5'],
-    6 => ['points' => 600, 'description' => 'Streak Bonus - Day 6'],
-    7 => ['points' => 1000, 'description' => 'Weekly Streak Complete!'],
-];
+// Handle reward claim
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['claim_reward'])) {
+    if ($canClaim) {
+        $rewardPoints = 50; // Set the reward points
+        $stmt = $pdo->prepare("UPDATE users SET points = points + ?, last_claimed = ? WHERE id = ?");
+        $stmt->execute([$rewardPoints, $today, $_SESSION['user_id']]);
+        setMessage('success', "You have successfully claimed your daily reward of $rewardPoints points!");
+        header("Location: daily_rewards.php");
+        exit();
+    } else {
+        setMessage('error', 'You have already claimed your reward for today.');
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -48,88 +41,100 @@ $rewards = [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daily Rewards - Task Manager</title>
-    <link rel="stylesheet" href="daily_rewards.css">
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="dashboard-container">
+        <?php include 'sidebar.php'; ?>
         
-    <?php include 'sidebar.php'; ?>
         <div class="main-content">
             <div class="rewards-header">
                 <h1><i class="fas fa-gift"></i> Daily Rewards</h1>
                 <div class="user-points">
                     <i class="fas fa-coins"></i>
-                    <span><?php echo number_format($userData['points'] ?? 0); ?> Points</span>
+                    <span><?php echo number_format($user['points']); ?> Points</span>
                 </div>
             </div>
 
             <?php displayMessage(); ?>
 
-            <div class="rewards-container">
-                <div class="streak-info">
-                    <div class="streak-count">
-                        <i class="fas fa-fire"></i>
-                        <span>Day <?php echo $streak + 1; ?></span>
-                    </div>
-                    <?php if ($canClaim): ?>
-                        <div class="reward-status available">
-                            <i class="fas fa-check-circle"></i> Reward Available!
-                        </div>
-                    <?php else: ?>
-                        <div class="reward-status unavailable">
-                            <i class="fas fa-clock"></i> 
-                            Next reward in: <span id="countdown"></span>
-                        </div>
-                    <?php endif; ?>
-                </div>
-
-                <div class="rewards-grid">
-                    <?php for ($day = 1; $day <= 7; $day++): ?>
-                        <div class="reward-card <?php 
-                            echo $day <= $streak ? 'claimed' : '';
-                            echo $day == $streak + 1 && $canClaim ? 'available' : '';
-                        ?>">
-                            <div class="reward-day">Day <?php echo $day; ?></div>
-                            <div class="reward-icon">
-                                <i class="fas fa-gift"></i>
-                            </div>
-                            <div class="reward-points">
-                                <i class="fas fa-coins"></i>
-                                <?php echo number_format($rewards[$day]['points']); ?>
-                            </div>
-                            <div class="reward-status">
-                                <?php if ($day < $streak + 1): ?>
-                                    <i class="fas fa-check-circle"></i> Claimed
-                                <?php elseif ($day == $streak + 1 && $canClaim): ?>
-                                    <button onclick="claimReward()" class="claim-btn">
-                                        Claim Reward
-                                    </button>
-                                <?php else: ?>
-                                    <i class="fas fa-lock"></i> Locked
-                                <?php endif; ?>
-                            </div>
-                        </div>
-                    <?php endfor; ?>
-                </div>
-
-                <div class="rewards-info">
-                    <h3><i class="fas fa-info-circle"></i> How it works</h3>
-                    <ul>
-                        <li>Log in daily to claim your rewards</li>
-                        <li>Keep your streak going for bigger rewards</li>
-                        <li>Miss a day and your streak resets</li>
-                        <li>Complete 7 days for a massive bonus!</li>
-                    </ul>
-                </div>
+            <div class="rewards-content">
+                <p>Claim your daily reward to earn extra points!</p>
+                <form method="POST">
+                    <button type="submit" name="claim_reward" class="btn btn-primary" <?php echo !$canClaim ? 'disabled' : ''; ?>>
+                        <i class="fas fa-hand-holding-usd"></i> Claim Reward
+                    </button>
+                </form>
             </div>
         </div>
     </div>
 
-    <script>
-        // Set the next claim time for countdown
-        const nextClaimTime = <?php echo $lastClaim + 86400; ?> * 1000;
-    </script>
-    <script src="daily_rewards.js"></script>
+    <style>
+    .rewards-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 20px;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        margin-bottom: 20px;
+    }
+
+    .rewards-header h1 {
+        margin: 0;
+        color: #2c3e50;
+        font-size: 1.8em;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .rewards-header .user-points {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 1.2em;
+        color: #f39c12;
+    }
+
+    .rewards-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        text-align: center;
+    }
+
+    .rewards-content p {
+        font-size: 1.2em;
+        color: #666;
+        margin-bottom: 20px;
+    }
+
+    .btn-primary {
+        background: #3498db;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        transition: background 0.3s ease;
+    }
+
+    .btn-primary:disabled {
+        background: #bdc3c7;
+        cursor: not-allowed;
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        background: #2980b9;
+    }
+    </style>
 </body>
 </html>

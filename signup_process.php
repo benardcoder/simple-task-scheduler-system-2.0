@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once 'config.php';
-require_once 'EmailService.php';
+require_once 'includes/EmailService.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     try {
@@ -18,6 +18,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception('Invalid email format');
         }
         
+        // Hash password
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+        
         // Check if email already exists
         $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
         $stmt->execute([$email]);
@@ -25,15 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             throw new Exception('Email already registered');
         }
         
-        // Hash password
-        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-        
         // Insert new user
-        $stmt = $pdo->prepare("
-            INSERT INTO users (username, email, password) 
-            VALUES (?, ?, ?)
-        ");
-        
+        $stmt = $pdo->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
         if ($stmt->execute([$username, $email, $hashedPassword])) {
             // Send welcome email
             $emailService = new EmailService();
@@ -55,3 +51,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 }
+?>

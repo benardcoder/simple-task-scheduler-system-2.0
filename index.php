@@ -51,7 +51,7 @@
         <!-- Reset Password Form -->
         <div id="resetForm" class="form-container hidden">
             <h2>Reset Password</h2>
-            <form action="reset.php" method="POST">
+            <form action="reset_password_process.php" method="POST">
                 <input type="email" name="email" placeholder="Email" required>
                 <button type="submit" class="btn">Reset Password</button>
             </form>

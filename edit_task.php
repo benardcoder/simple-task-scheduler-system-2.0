@@ -8,45 +8,44 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
-$task_id = isset($_GET['id']) ? $_GET['id'] : null;
-$task = null;
-
-if ($task_id) {
-    try {
-        $stmt = $pdo->prepare("SELECT * FROM tasks WHERE id = ? AND user_id = ?");
-        $stmt->execute([$task_id, $_SESSION['user_id']]);
-        $task = $stmt->fetch(PDO::FETCH_ASSOC);
-    } catch(PDOException $e) {
-        $_SESSION['message'] = "Error: " . $e->getMessage();
-        $_SESSION['message_type'] = "error";
-    }
-}
-
-if (!$task) {
+// Check if task ID is provided
+if (!isset($_GET['id'])) {
     header("Location: my_tasks.php");
     exit();
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    $title = trim($_POST['title']);
-    $description = trim($_POST['description']);
-    $due_date = $_POST['due_date'];
-    $priority = $_POST['priority'];
-    $category = $_POST['category'];
+$task_id = $_GET['id'];
 
-    try {
-        $stmt = $pdo->prepare("UPDATE tasks SET title = ?, description = ?, due_date = ?, 
-                              priority = ?, category = ? WHERE id = ? AND user_id = ?");
-        $stmt->execute([$title, $description, $due_date, $priority, $category, $task_id, $_SESSION['user_id']]);
-        
-        $_SESSION['message'] = "Task updated successfully!";
-        $_SESSION['message_type'] = "success";
-        header("Location: my_tasks.php");
-        exit();
-    } catch(PDOException $e) {
-        $_SESSION['message'] = "Error updating task: " . $e->getMessage();
-        $_SESSION['message_type'] = "error";
-    }
+// Fetch task details
+$stmt = $pdo->prepare("SELECT * FROM tasks WHERE id = ? AND user_id = ?");
+$stmt->execute([$task_id, $_SESSION['user_id']]);
+$task = $stmt->fetch();
+
+if (!$task) {
+    setMessage('error', 'Task not found.');
+    header("Location: my_tasks.php");
+    exit();
+}
+
+// Handle form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $title = $_POST['title'];
+    $description = $_POST['description'];
+    $category = $_POST['category'];
+    $deadline = $_POST['deadline'];
+    $points = $_POST['points'];
+
+    // Update task
+    $updateStmt = $pdo->prepare("
+        UPDATE tasks 
+        SET title = ?, description = ?, category = ?, deadline = ?, points = ?
+        WHERE id = ? AND user_id = ?
+    ");
+    $updateStmt->execute([$title, $description, $category, $deadline, $points, $task_id, $_SESSION['user_id']]);
+
+    setMessage('success', 'Task updated successfully.');
+    header("Location: my_tasks.php");
+    exit();
 }
 ?>
 
@@ -55,76 +54,93 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Task</title>
-    <link rel="stylesheet" href="task_scheduler.css">
+    <title>Edit Task - Task Manager</title>
+    <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
 <body>
     <div class="dashboard-container">
-        <!-- Sidebar (same as dashboard.php) -->
-        <div class="sidebar">
-            <!-- Copy sidebar content from dashboard.php -->
-        </div>
-
+        <?php include 'sidebar.php'; ?>
+        
         <div class="main-content">
-            <div class="content-header">
+            <div class="edit-task-header">
                 <h1><i class="fas fa-edit"></i> Edit Task</h1>
             </div>
 
-            <div class="task-form-container">
-                <form action="edit_task.php?id=<?php echo $task_id; ?>" method="POST" class="task-form">
-                    <div class="form-group">
-                        <label for="title">Task Title</label>
-                        <input type="text" id="title" name="title" required 
-                               value="<?php echo htmlspecialchars($task['title']); ?>">
-                    </div>
+            <?php displayMessage(); ?>
 
-                    <div class="form-group">
-                        <label for="description">Description</label>
-                        <textarea id="description" name="description" rows="3"><?php echo htmlspecialchars($task['description']); ?></textarea>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="due_date">Due Date</label>
-                            <input type="datetime-local" id="due_date" name="due_date" required 
-                                   value="<?php echo date('Y-m-d\TH:i', strtotime($task['due_date'])); ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="priority">Priority</label>
-                            <select id="priority" name="priority" required>
-                                <option value="Low" <?php echo $task['priority'] == 'Low' ? 'selected' : ''; ?>>Low</option>
-                                <option value="Medium" <?php echo $task['priority'] == 'Medium' ? 'selected' : ''; ?>>Medium</option>
-                                <option value="High" <?php echo $task['priority'] == 'High' ? 'selected' : ''; ?>>High</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="category">Category</label>
-                        <select id="category" name="category" required>
-                            <option value="Work" <?php echo $task['category'] == 'Work' ? 'selected' : ''; ?>>Work</option>
-                            <option value="Personal" <?php echo $task['category'] == 'Personal' ? 'selected' : ''; ?>>Personal</option>
-                            <option value="Study" <?php echo $task['category'] == 'Study' ? 'selected' : ''; ?>>Study</option>
-                            <option value="Health" <?php echo $task['category'] == 'Health' ? 'selected' : ''; ?>>Health</option>
-                            <option value="Other" <?php echo $task['category'] == 'Other' ? 'selected' : ''; ?>>Other</option>
-                        </select>
-                    </div>
-
-                    <div class="form-actions">
-                        <button type="submit" class="btn-primary">
-                            <i class="fas fa-save"></i> Save Changes
-                        </button>
-                        <a href="my_tasks.php" class="btn-secondary">
-                            <i class="fas fa-times"></i> Cancel
-                        </a>
-                    </div>
-                </form>
-            </div>
+            <form method="POST" class="edit-task-form">
+                <div class="form-group">
+                    <label for="title">Title</label>
+                    <input type="text" id="title" name="title" value="<?php echo htmlspecialchars($task['title']); ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="description">Description</label>
+                    <textarea id="description" name="description" required><?php echo htmlspecialchars($task['description']); ?></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="category">Category</label>
+                    <input type="text" id="category" name="category" value="<?php echo htmlspecialchars($task['category']); ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="deadline">Deadline</label>
+                    <input type="datetime-local" id="deadline" name="deadline" value="<?php echo date('Y-m-d\TH:i', strtotime($task['deadline'])); ?>" required>
+                </div>
+                <div class="form-group">
+                    <label for="points">Points</label>
+                    <input type="number" id="points" name="points" value="<?php echo htmlspecialchars($task['points']); ?>" required>
+                </div>
+                <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Changes</button>
+            </form>
         </div>
     </div>
 
-    <script src="task_scheduler.js"></script>
+    <style>
+    .edit-task-form {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        max-width: 600px;
+        margin: 20px auto;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        color: #666;
+    }
+
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ddd;
+        font-size: 1em;
+    }
+
+    .form-group textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    .btn-primary {
+        background: #007bff;
+        color: white;
+        padding: 10px 20px;
+        border-radius: 5px;
+        border: none;
+        cursor: pointer;
+        font-size: 1em;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+    }
+    </style>
 </body>
 </html>
