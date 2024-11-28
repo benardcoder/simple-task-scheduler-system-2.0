@@ -34,6 +34,8 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <i class="fas fa-store"></i>
             <span>Shop</span>
         </a>
+        <!-- Add this where your other navigation links are -->
+
 
         <div class="nav-divider"></div>
 

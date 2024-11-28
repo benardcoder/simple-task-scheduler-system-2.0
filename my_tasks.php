@@ -8,6 +8,30 @@ if (!isset($_SESSION['user_id'])) {
     exit();
 }
 
+// Add this new code block to handle task completion
+if (isset($_POST['complete_task']) && isset($_POST['task_id'])) {
+    $taskId = $_POST['task_id'];
+    $userId = $_SESSION['user_id'];
+    
+    $updateStmt = $pdo->prepare("
+        UPDATE tasks 
+        SET status = 'completed' 
+        WHERE id = ? AND user_id = ?
+    ");
+    
+    if ($updateStmt->execute([$taskId, $userId])) {
+        $_SESSION['message'] = "Task marked as completed!";
+        $_SESSION['message_type'] = "success";
+    } else {
+        $_SESSION['message'] = "Error completing task.";
+        $_SESSION['message_type'] = "error";
+    }
+    
+    // Redirect to refresh the page
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit();
+}
+
 // Define available categories
 $availableCategories = [
     'All' => 'fas fa-list-ul',
@@ -149,8 +173,6 @@ $taskStats = $statsStmt->fetchAll();
             </div>
         </div>
     </div>
-
-    <!-- Previous PHP code remains the same -->
 
 <style>
 /* Modern Dashboard Layout */
@@ -460,4 +482,3 @@ $taskStats = $statsStmt->fetchAll();
 </style>
 </body>
 </html>
-    

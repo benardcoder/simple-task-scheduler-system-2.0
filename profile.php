@@ -2,40 +2,55 @@
 session_start();
 require_once 'config.php';
 require_once 'functions.php';
+require_once 'update_points.php';
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
 }
 
-// Fetch user data and profile data
-$stmt = $pdo->prepare("
-    SELECT u.username, u.email, u.points, p.avatar, p.theme, p.task_slots, p.join_date 
-    FROM users u 
-    LEFT JOIN profile p ON u.id = p.user_id 
-    WHERE u.id = ?
-");
-$stmt->execute([$_SESSION['user_id']]);
-$userData = $stmt->fetch();
+// Refresh points from database
+$points = getUserPoints($pdo, $_SESSION['user_id']);
+$_SESSION['user_points'] = $points;
 
-// Set default avatar if none is set
-$avatarImage = $userData['avatar'] ? "images/avatars/{$userData['avatar']}" : "images/avatars/default-avatar.png";
-
-// Calculate user statistics
+// Fetch user data
 $stmt = $pdo->prepare("
     SELECT 
-        COUNT(*) as total_tasks,
-        SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) as completed_tasks
-    FROM tasks 
-    WHERE user_id = ?
+        u.*,
+        COUNT(t.id) as total_tasks,
+        SUM(t.completed = 1) as completed_tasks
+    FROM users u
+    LEFT JOIN tasks t ON u.id = t.user_id
+    WHERE u.id = ?
+    GROUP BY u.id
 ");
 $stmt->execute([$_SESSION['user_id']]);
-$stats = $stmt->fetch();
+$userData = $stmt->fetch(PDO::FETCH_ASSOC);
 
 // Calculate completion rate
-$completionRate = $stats['total_tasks'] > 0 
-    ? round(($stats['completed_tasks'] / $stats['total_tasks']) * 100) 
+$completionRate = $userData['total_tasks'] > 0 
+    ? round(($userData['completed_tasks'] / $userData['total_tasks']) * 100) 
     : 0;
+
+// Get recent activity
+$stmt = $pdo->prepare("
+    SELECT 
+        title,
+        completed,
+        completed_date,
+        priority,
+        difficulty
+    FROM tasks 
+    WHERE user_id = ? 
+    ORDER BY 
+        CASE 
+            WHEN completed_date IS NOT NULL THEN completed_date 
+            ELSE created_at 
+        END DESC 
+    LIMIT 5
+");
+$stmt->execute([$_SESSION['user_id']]);
+$recentActivity = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
@@ -47,228 +62,201 @@ $completionRate = $stats['total_tasks'] > 0
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 </head>
-<body>
+<body class="theme-<?php echo isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light'; ?>">
     <div class="dashboard-container">
         <?php include 'sidebar.php'; ?>
         
         <div class="main-content">
             <div class="profile-header">
-                <h1><i class="fas fa-user-circle"></i> My Profile</h1>
+                <h1><i class="fas fa-user"></i> My Profile</h1>
+                <div class="points-display">
+                    <i class="fas fa-star"></i>
+                    Points: <span id="points-value"><?php echo $_SESSION['user_points'] ?? 0; ?></span>
+                </div>
             </div>
 
-            <?php displayMessage(); ?>
-
-            <div class="profile-grid">
-                <!-- Avatar and Basic Info Section -->
-                <div class="profile-card avatar-card">
-                    <div class="avatar-section">
-                        <img src="<?php echo htmlspecialchars($avatarImage); ?>" alt="User Avatar" class="avatar-image">
-                        <h2><?php echo htmlspecialchars($userData['username']); ?></h2>
-                        <p class="member-since">Member since <?php echo date('F Y', strtotime($userData['join_date'])); ?></p>
-                    </div>
-                    <div class="profile-stats">
-                        <div class="stat-item">
-                            <i class="fas fa-coins"></i>
-                            <span class="stat-value"><?php echo number_format($userData['points']); ?></span>
-                            <span class="stat-label">Points</span>
+            <div class="profile-container">
+                <div class="profile-section user-info">
+                    <h2>User Information</h2>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <label>Username</label>
+                            <p><?php echo htmlspecialchars($userData['username']); ?></p>
                         </div>
-                        <div class="stat-item">
-                            <i class="fas fa-tasks"></i>
-                            <span class="stat-value"><?php echo $userData['task_slots']; ?></span>
-                            <span class="stat-label">Task Slots</span>
+                        <div class="info-item">
+                            <label>Email</label>
+                            <p><?php echo htmlspecialchars($userData['email']); ?></p>
                         </div>
-                    </div>
-                </div>
-
-                <!-- Task Statistics Section -->
-                <div class="profile-card stats-card">
-                    <h3><i class="fas fa-chart-bar"></i> Task Statistics</h3>
-                    <div class="stats-grid">
-                        <div class="stat-box">
-                            <span class="stat-number"><?php echo $stats['total_tasks']; ?></span>
-                            <span class="stat-label">Total Tasks</span>
+                        <div class="info-item">
+                            <label>Total Points</label>
+                            <p><?php echo $userData['points']; ?></p>
                         </div>
-                        <div class="stat-box">
-                            <span class="stat-number"><?php echo $stats['completed_tasks']; ?></span>
-                            <span class="stat-label">Completed</span>
+                        <div class="info-item">
+                            <label>Tasks Completed</label>
+                            <p><?php echo $userData['completed_tasks']; ?> / <?php echo $userData['total_tasks']; ?></p>
                         </div>
-                        <div class="stat-box">
-                            <span class="stat-number"><?php echo $completionRate; ?>%</span>
-                            <span class="stat-label">Completion Rate</span>
+                        <div class="info-item">
+                            <label>Completion Rate</label>
+                            <p><?php echo $completionRate; ?>%</p>
                         </div>
                     </div>
                 </div>
 
-                <!-- Account Details Section -->
-                <div class="profile-card details-card">
-                    <h3><i class="fas fa-info-circle"></i> Account Details</h3>
-                    <div class="account-details">
-                        <div class="detail-item">
-                            <span class="detail-label">Username:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($userData['username']); ?></span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Email:</span>
-                            <span class="detail-value"><?php echo htmlspecialchars($userData['email']); ?></span>
-                        </div>
-                        <div class="detail-item">
-                            <span class="detail-label">Current Theme:</span>
-                            <span class="detail-value"><?php echo ucfirst($userData['theme'] ?? 'Default'); ?></span>
-                        </div>
+                <div class="profile-section recent-activity">
+                    <h2>Recent Activity</h2>
+                    <div class="activity-list">
+                        <?php if (empty($recentActivity)): ?>
+                            <p class="no-activity">No recent activity</p>
+                        <?php else: ?>
+                            <?php foreach ($recentActivity as $activity): ?>
+                                <div class="activity-item">
+                                    <div class="activity-icon">
+                                        <i class="fas <?php echo $activity['completed'] ? 'fa-check-circle' : 'fa-clock'; ?>"></i>
+                                    </div>
+                                    <div class="activity-details">
+                                        <h3><?php echo htmlspecialchars($activity['title']); ?></h3>
+                                        <p>
+                                            <?php if ($activity['completed']): ?>
+                                                Completed on <?php echo date('M d, Y', strtotime($activity['completed_date'])); ?>
+                                            <?php else: ?>
+                                                In progress
+                                            <?php endif; ?>
+                                        </p>
+                                        <div class="task-meta">
+                                            <span class="priority <?php echo $activity['priority']; ?>">
+                                                <?php echo ucfirst($activity['priority']); ?>
+                                            </span>
+                                            <span class="difficulty <?php echo $activity['difficulty']; ?>">
+                                                <?php echo ucfirst($activity['difficulty']); ?>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <script>
+    function updatePointsDisplay(points) {
+        const pointsDisplays = document.querySelectorAll('.points-display span');
+        pointsDisplays.forEach(display => {
+            if (display) {
+                display.textContent = points;
+            }
+        });
+    }
+
+    function refreshPoints() {
+        fetch('get_points.php')
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    updatePointsDisplay(data.points);
+                    localStorage.setItem('userPoints', data.points);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    window.addEventListener('storage', function(e) {
+        if (e.key === 'userPoints') {
+            updatePointsDisplay(e.newValue);
+        }
+    });
+
+    setInterval(refreshPoints, 30000);
+    refreshPoints();
+    </script>
+
     <style>
-    .profile-header {
+    .profile-container {
         padding: 20px;
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        margin-bottom: 20px;
-    }
-
-    .profile-header h1 {
-        margin: 0;
-        color: #2c3e50;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .profile-grid {
         display: grid;
+        gap: 20px;
         grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-        gap: 20px;
     }
 
-    .profile-card {
-        background: white;
-        padding: 20px;
+    .profile-section {
+        background: var(--bg-secondary);
         border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        padding: 20px;
     }
 
-    .avatar-card {
-        text-align: center;
-    }
-
-    .avatar-section {
-        margin-bottom: 20px;
-    }
-
-    .avatar-image {
-        width: 150px;
-        height: 150px;
-        border-radius: 50%;
-        object-fit: cover;
-        margin-bottom: 15px;
-        border: 4px solid #3498db;
-    }
-
-    .avatar-section h2 {
-        margin: 10px 0;
-        color: #2c3e50;
-    }
-
-    .member-since {
-        color: #7f8c8d;
-        font-size: 0.9em;
-    }
-
-    .profile-stats {
-        display: flex;
-        justify-content: center;
-        gap: 20px;
-        margin-top: 20px;
-    }
-
-    .stat-item {
-        text-align: center;
-    }
-
-    .stat-item i {
-        font-size: 1.5em;
-        color: #3498db;
-        margin-bottom: 5px;
-    }
-
-    .stat-value {
-        display: block;
-        font-size: 1.2em;
-        font-weight: bold;
-        color: #2c3e50;
-    }
-
-    .stat-label {
-        color: #7f8c8d;
-        font-size: 0.9em;
-    }
-
-    .stats-card h3, .details-card h3 {
-        margin-top: 0;
-        color: #2c3e50;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-    }
-
-    .stats-grid {
+    .info-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
         gap: 15px;
-        margin-top: 20px;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     }
 
-    .stat-box {
-        text-align: center;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 8px;
+    .info-item {
+        padding: 10px;
+        background: var(--bg-primary);
+        border-radius: 5px;
     }
 
-    .stat-number {
-        display: block;
-        font-size: 1.5em;
-        font-weight: bold;
-        color: #2c3e50;
+    .info-item label {
+        color: var(--text-secondary);
+        font-size: 0.9em;
     }
 
-    .account-details {
-        margin-top: 20px;
+    .info-item p {
+        margin: 5px 0 0 0;
+        color: var(--text-primary);
+        font-size: 1.1em;
     }
 
-    .detail-item {
+    .activity-list {
         display: flex;
-        justify-content: space-between;
-        padding: 10px 0;
-        border-bottom: 1px solid #eee;
+        flex-direction: column;
+        gap: 15px;
     }
 
-    .detail-item:last-child {
-        border-bottom: none;
+    .activity-item {
+        display: flex;
+        gap: 15px;
+        padding: 15px;
+        background: var(--bg-primary);
+        border-radius: 5px;
     }
 
-    .detail-label {
-        color: #7f8c8d;
+    .activity-icon {
+        font-size: 1.5em;
+        color: var(--text-primary);
     }
 
-    .detail-value {
-        color: #2c3e50;
-        font-weight: 500;
+    .activity-details h3 {
+        margin: 0;
+        color: var(--text-primary);
     }
 
-    @media (max-width: 768px) {
-        .profile-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .stats-grid {
-            grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
-        }
+    .activity-details p {
+        margin: 5px 0;
+        color: var(--text-secondary);
     }
+
+    .task-meta {
+        display: flex;
+        gap: 10px;
+        margin-top: 5px;
+    }
+
+    .priority, .difficulty {
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 0.8em;
+    }
+
+    .priority.high { background: #ff4444; color: white; }
+    .priority.medium { background: #ffbb33; color: black; }
+    .priority.low { background: #00C851; color: white; }
+
+    .difficulty.hard { background: #ff4444; color: white; }
+    .difficulty.medium { background: #ffbb33; color: black; }
+    .difficulty.easy { background: #00C851; color: white; }
     </style>
 </body>
 </html>
