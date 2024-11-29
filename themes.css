@@ -1,0 +1,54 @@
+:root {
+    /* Light theme variables */
+    --light-bg-primary: #ffffff;
+    --light-bg-secondary: #f8f9fa;
+    --light-text-primary: #2c3e50;
+    --light-text-secondary: #666666;
+    --light-border: #eee;
+    
+    /* Dark theme variables */
+    --dark-bg-primary: #1a1a1a;
+    --dark-bg-secondary: #2d2d2d;
+    --dark-text-primary: #ffffff;
+    --dark-text-secondary: #cccccc;
+    --dark-border: #404040;
+}
+
+.theme-light {
+    --bg-primary: var(--light-bg-primary);
+    --bg-secondary: var(--light-bg-secondary);
+    --text-primary: var(--light-text-primary);
+    --text-secondary: var(--light-text-secondary);
+    --border: var(--light-border);
+}
+
+.theme-dark {
+    --bg-primary: var(--dark-bg-primary);
+    --bg-secondary: var(--dark-bg-secondary);
+    --text-primary: var(--dark-text-primary);
+    --text-secondary: var(--dark-text-secondary);
+    --border: var(--dark-border);
+}
+
+body {
+    background-color: var(--bg-primary);
+    color: var(--text-primary);
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.main-content {
+    background-color: var(--bg-secondary);
+}
+
+/* Add theme-specific styles for common elements */
+.card, .task-card, .shop-item {
+    background-color: var(--bg-secondary);
+    color: var(--text-primary);
+    border-color: var(--border);
+}
+
+.sidebar {
+    background-color: var(--bg-secondary);
+}
+
+/* Add more theme-specific styles as needed */

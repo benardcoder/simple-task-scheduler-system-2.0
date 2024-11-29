@@ -56,3 +56,16 @@ function purchaseItem(itemId, price) {
         alert('An error occurred while processing your purchase');
     });
 }
+const Shop = () => {
+    const { user } = useContext(UserContext);
+    
+    return (
+      <div className="shop">
+        <h2>Shop</h2>
+        <div className="points-display">
+          <p>Available Points: {user.points}</p>
+        </div>
+        {/* ... shop items ... */}
+      </div>
+    );
+  };

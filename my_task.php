@@ -22,3 +22,5 @@ while ($task = $result->fetch_assoc()) {
     echo "</div>";
 }
 ?>
+
+<link rel="stylesheet" href="themes.css">

@@ -15,8 +15,11 @@ $user = $stmt->fetch();
 
 // Check if the user can claim today's reward
 $canClaim = false;
-$today = date('Y-m-d');
-if ($user['last_claimed'] !== $today) {
+$now = time();
+$lastClaimTime = strtotime($user['last_claimed']);
+
+// Check if 24 hours have passed since last claim
+if (!$user['last_claimed'] || ($now - $lastClaimTime) >= 86400) {  // 86400 seconds = 24 hours
     $canClaim = true;
 }
 
@@ -24,13 +27,14 @@ if ($user['last_claimed'] !== $today) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['claim_reward'])) {
     if ($canClaim) {
         $rewardPoints = 50; // Set the reward points
+        $currentDateTime = date('Y-m-d H:i:s'); // Store full timestamp instead of just date
         $stmt = $pdo->prepare("UPDATE users SET points = points + ?, last_claimed = ? WHERE id = ?");
-        $stmt->execute([$rewardPoints, $today, $_SESSION['user_id']]);
+        $stmt->execute([$rewardPoints, $currentDateTime, $_SESSION['user_id']]);
         setMessage('success', "You have successfully claimed your daily reward of $rewardPoints points!");
         header("Location: daily_rewards.php");
         exit();
     } else {
-        setMessage('error', 'You have already claimed your reward for today.');
+        setMessage('error', 'You can claim your next reward in ' . ceil(((86400 - ($now - $lastClaimTime)) / 3600)) . ' hours.');
     }
 }
 ?>
@@ -43,8 +47,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['claim_reward'])) {
     <title>Daily Rewards - Task Manager</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="themes.css">
 </head>
-<body>
+<body class="theme-<?php echo isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light'; ?>">
     <div class="dashboard-container">
         <?php include 'sidebar.php'; ?>
         

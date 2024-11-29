@@ -52,6 +52,7 @@ $baseUrl = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
     <title>Settings - Task Manager</title>
     <link rel="stylesheet" href="settings.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="themes.css">
 </head>
 <body class="theme-<?php echo htmlspecialchars($userPreferences['theme']); ?>">
     <div class="dashboard-container">
@@ -186,7 +187,6 @@ $baseUrl = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
 
         async function changeTheme(theme) {
             try {
-                console.log('Changing theme to:', theme); // Debug log
                 const formData = new FormData();
                 formData.append('theme', theme);
 
@@ -195,17 +195,24 @@ $baseUrl = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
                     body: formData
                 });
 
-                console.log('Response status:', response.status); // Debug log
-
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
 
                 const data = await response.json();
-                console.log('Response data:', data); // Debug log
-
+                
                 if (data.success) {
-                    applyTheme(theme);
+                    // Update localStorage and apply theme
+                    localStorage.setItem('theme', theme);
+                    document.body.className = `theme-${theme}`;
+                    
+                    // Broadcast theme change to other pages
+                    window.dispatchEvent(new StorageEvent('storage', {
+                        key: 'theme',
+                        newValue: theme,
+                        storageArea: localStorage
+                    }));
+                    
                     showMessage('Theme updated successfully', 'success');
                 } else {
                     throw new Error(data.message || 'Error updating theme');
@@ -286,7 +293,51 @@ $baseUrl = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
     </script>
 
     <style>
-        /* Your existing CSS styles here */
+        :root {
+            /* Light theme variables */
+            --light-bg-primary: #ffffff;
+            --light-bg-secondary: #f8f9fa;
+            --light-text-primary: #2c3e50;
+            --light-text-secondary: #666666;
+            --light-border: #eee;
+            
+            /* Dark theme variables */
+            --dark-bg-primary: #1a1a1a;
+            --dark-bg-secondary: #2d2d2d;
+            --dark-text-primary: #ffffff;
+            --dark-text-secondary: #cccccc;
+            --dark-border: #404040;
+        }
+
+        /* Light theme */
+        .theme-light {
+            --bg-primary: var(--light-bg-primary);
+            --bg-secondary: var(--light-bg-secondary);
+            --text-primary: var(--light-text-primary);
+            --text-secondary: var(--light-text-secondary);
+            --border: var(--light-border);
+        }
+
+        /* Dark theme */
+        .theme-dark {
+            --bg-primary: var(--dark-bg-primary);
+            --bg-secondary: var(--dark-bg-secondary);
+            --text-primary: var(--dark-text-primary);
+            --text-secondary: var(--dark-text-secondary);
+            --border: var(--dark-border);
+        }
+
+        /* Apply theme variables */
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+        }
+
+        .main-content {
+            background-color: var(--bg-secondary);
+        }
+
+        /* Add more theme-aware styles as needed */
     </style>
 </body>
 </html>

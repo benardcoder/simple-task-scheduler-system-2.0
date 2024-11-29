@@ -2,16 +2,18 @@
 session_start();
 require_once 'config.php';
 require_once 'functions.php';
-require_once 'update_points.php';
+require_once 'update_points.php';  // Now safe to include
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
     exit();
 }
 
-// Refresh points from database
-$points = getUserPoints($pdo, $_SESSION['user_id']);
-$_SESSION['user_points'] = $points;
+// Fetch fresh points from database
+$stmt = $pdo->prepare("SELECT points FROM users WHERE id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$points = $stmt->fetchColumn();
+$_SESSION['user_points'] = $points; // Update session with current points
 
 // Fetch shop items
 $stmt = $pdo->prepare("SELECT * FROM shop_items WHERE available = TRUE ORDER BY cost ASC");
@@ -22,6 +24,20 @@ $shopItems = $stmt->fetchAll(PDO::FETCH_ASSOC);
 $stmt = $pdo->prepare("SELECT item_id FROM user_purchases WHERE user_id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $purchasedItems = $stmt->fetchAll(PDO::FETCH_COLUMN);
+
+// Group items by category
+$stmt = $pdo->prepare("
+    SELECT * FROM shop_items 
+    WHERE available = TRUE 
+    ORDER BY category, cost
+");
+$stmt->execute();
+$items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$itemsByCategory = [];
+foreach ($items as $item) {
+    $itemsByCategory[$item['category']][] = $item;
+}
 ?>
 
 <!DOCTYPE html>
@@ -32,6 +48,7 @@ $purchasedItems = $stmt->fetchAll(PDO::FETCH_COLUMN);
     <title>Shop - Task Manager</title>
     <link rel="stylesheet" href="shop.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="themes.css">
 </head>
 <body class="theme-<?php echo isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light'; ?>">
     <div class="dashboard-container">
@@ -99,8 +116,16 @@ $purchasedItems = $stmt->fetchAll(PDO::FETCH_COLUMN);
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    updatePointsDisplay(data.points);
-                    localStorage.setItem('userPoints', data.points);
+                    const pointsValue = parseInt(data.points);
+                    updatePointsDisplay(pointsValue);
+                    
+                    // Update purchase buttons based on new points
+                    document.querySelectorAll('.purchase-btn').forEach(button => {
+                        const cost = parseInt(button.closest('.shop-item').querySelector('.item-cost').textContent);
+                        button.disabled = pointsValue < cost;
+                    });
+                    
+                    localStorage.setItem('userPoints', pointsValue);
                 }
             })
             .catch(error => console.error('Error:', error));
@@ -165,7 +190,8 @@ $purchasedItems = $stmt->fetchAll(PDO::FETCH_COLUMN);
         }
     });
 
-    setInterval(refreshPoints, 30000);
+    document.addEventListener('DOMContentLoaded', refreshPoints);
+    setInterval(refreshPoints, 5000);
     </script>
 
     <style>

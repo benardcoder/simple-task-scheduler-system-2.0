@@ -34,8 +34,11 @@ $current_page = basename($_SERVER['PHP_SELF']);
             <i class="fas fa-store"></i>
             <span>Shop</span>
         </a>
-        <!-- Add this where your other navigation links are -->
 
+        <a href="purchased_items.php" class="<?php echo $current_page == 'purchased_items.php' ? 'active' : ''; ?>">
+            <i class="fas fa-box-open"></i>
+            <span>My Items</span>
+        </a>
 
         <div class="nav-divider"></div>
 
@@ -231,3 +234,5 @@ $current_page = basename($_SERVER['PHP_SELF']);
     }
 }
 </style>
+
+<script src="theme.js"></script>

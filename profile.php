@@ -2,7 +2,7 @@
 session_start();
 require_once 'config.php';
 require_once 'functions.php';
-require_once 'update_points.php';
+require_once 'update_points.php';  // Now safe to include
 
 if (!isset($_SESSION['user_id'])) {
     header("Location: index.php");
@@ -13,12 +13,12 @@ if (!isset($_SESSION['user_id'])) {
 $points = getUserPoints($pdo, $_SESSION['user_id']);
 $_SESSION['user_points'] = $points;
 
-// Fetch user data
+// Fetch user data with correct JOIN and points
 $stmt = $pdo->prepare("
     SELECT 
         u.*,
-        COUNT(t.id) as total_tasks,
-        SUM(t.completed = 1) as completed_tasks
+        COUNT(DISTINCT t.id) as total_tasks,
+        SUM(CASE WHEN t.status = 'completed' THEN 1 ELSE 0 END) as completed_tasks
     FROM users u
     LEFT JOIN tasks t ON u.id = t.user_id
     WHERE u.id = ?
@@ -61,6 +61,7 @@ $recentActivity = $stmt->fetchAll(PDO::FETCH_ASSOC);
     <title>Profile - Task Manager</title>
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="themes.css">
 </head>
 <body class="theme-<?php echo isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light'; ?>">
     <div class="dashboard-container">
@@ -89,7 +90,7 @@ $recentActivity = $stmt->fetchAll(PDO::FETCH_ASSOC);
                         </div>
                         <div class="info-item">
                             <label>Total Points</label>
-                            <p><?php echo $userData['points']; ?></p>
+                            <p id="user-points"><?php echo number_format($userData['points']); ?></p>
                         </div>
                         <div class="info-item">
                             <label>Tasks Completed</label>
@@ -142,10 +143,11 @@ $recentActivity = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     <script>
     function updatePointsDisplay(points) {
-        const pointsDisplays = document.querySelectorAll('.points-display span');
+        // Update all points displays on the page
+        const pointsDisplays = document.querySelectorAll('#points-value, #user-points');
         pointsDisplays.forEach(display => {
             if (display) {
-                display.textContent = points;
+                display.textContent = Number(points).toLocaleString();
             }
         });
     }
@@ -155,21 +157,32 @@ $recentActivity = $stmt->fetchAll(PDO::FETCH_ASSOC);
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    updatePointsDisplay(data.points);
-                    localStorage.setItem('userPoints', data.points);
+                    const pointsValue = parseInt(data.points);
+                    updatePointsDisplay(pointsValue);
+                    
+                    // Update localStorage
+                    localStorage.setItem('userPoints', pointsValue);
+                    
+                    // Also update the profile points display
+                    const userPointsElement = document.getElementById('user-points');
+                    if (userPointsElement) {
+                        userPointsElement.textContent = pointsValue.toLocaleString();
+                    }
                 }
             })
             .catch(error => console.error('Error:', error));
     }
 
+    // Refresh points immediately and then every 5 seconds
+    document.addEventListener('DOMContentLoaded', refreshPoints);
+    setInterval(refreshPoints, 5000);
+
+    // Listen for points updates from other tabs/windows
     window.addEventListener('storage', function(e) {
         if (e.key === 'userPoints') {
             updatePointsDisplay(e.newValue);
         }
     });
-
-    setInterval(refreshPoints, 30000);
-    refreshPoints();
     </script>
 
     <style>

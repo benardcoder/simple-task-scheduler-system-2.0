@@ -13,17 +13,111 @@ if (isset($_POST['complete_task']) && isset($_POST['task_id'])) {
     $taskId = $_POST['task_id'];
     $userId = $_SESSION['user_id'];
     
-    $updateStmt = $pdo->prepare("
-        UPDATE tasks 
-        SET status = 'completed' 
-        WHERE id = ? AND user_id = ?
-    ");
+    try {
+        // Start transaction
+        $pdo->beginTransaction();
+        
+        // Update task status
+        $updateStmt = $pdo->prepare("
+            UPDATE tasks 
+            SET status = 'completed' 
+            WHERE id = ? AND user_id = ? AND status != 'completed'
+        ");
+        
+        if ($updateStmt->execute([$taskId, $userId])) {
+            // Only add points if the task was actually updated (wasn't already completed)
+            if ($updateStmt->rowCount() > 0) {
+                // Update user points (150 points per task)
+                $pointsStmt = $pdo->prepare("
+                    UPDATE users 
+                    SET points = points + 150 
+                    WHERE id = ?
+                ");
+                $success = $pointsStmt->execute([$userId]);
+                
+                if ($success) {
+                    // Refresh the session points
+                    $newPoints = getUserPoints($pdo, $userId);
+                    $_SESSION['user_points'] = $newPoints;
+                    
+                    $_SESSION['message'] = "Task marked as completed! You earned 150 points!";
+                    $_SESSION['message_type'] = "success";
+                }
+            } else {
+                $_SESSION['message'] = "Task was already completed.";
+                $_SESSION['message_type'] = "info";
+            }
+        } else {
+            $_SESSION['message'] = "Error completing task.";
+            $_SESSION['message_type'] = "error";
+        }
+        
+        // Commit transaction
+        $pdo->commit();
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $pdo->rollBack();
+        $_SESSION['message'] = "Error processing task completion.";
+        $_SESSION['message_type'] = "error";
+    }
     
-    if ($updateStmt->execute([$taskId, $userId])) {
-        $_SESSION['message'] = "Task marked as completed!";
-        $_SESSION['message_type'] = "success";
-    } else {
-        $_SESSION['message'] = "Error completing task.";
+    // Redirect to refresh the page
+    header("Location: " . $_SERVER['REQUEST_URI']);
+    exit();
+}
+
+// Handle task deletion
+if (isset($_POST['delete_task']) && isset($_POST['task_id'])) {
+    $taskId = $_POST['task_id'];
+    $userId = $_SESSION['user_id'];
+    
+    try {
+        // Start transaction
+        $pdo->beginTransaction();
+        
+        // Update task status to deleted
+        $deleteStmt = $pdo->prepare("
+            UPDATE tasks 
+            SET status = 'deleted' 
+            WHERE id = ? AND user_id = ? AND status = 'pending'
+        ");
+        
+        if ($deleteStmt->execute([$taskId, $userId])) {
+            // Only deduct points if the task was actually deleted (wasn't already deleted)
+            if ($deleteStmt->rowCount() > 0) {
+                // Deduct points from user (50 points penalty)
+                $pointsStmt = $pdo->prepare("
+                    UPDATE users 
+                    SET points = GREATEST(0, points - 50)
+                    WHERE id = ?
+                ");
+                $success = $pointsStmt->execute([$userId]);
+                
+                if ($success) {
+                    // Refresh the session points
+                    $newPoints = getUserPoints($pdo, $userId);
+                    $_SESSION['user_points'] = $newPoints;
+                    
+                    $_SESSION['message'] = "Task deleted. 50 points have been deducted.";
+                    $_SESSION['message_type'] = "warning";
+                }
+            } else {
+                $_SESSION['message'] = "Task was already deleted.";
+                $_SESSION['message_type'] = "info";
+            }
+        } else {
+            $_SESSION['message'] = "Error deleting task.";
+            $_SESSION['message_type'] = "error";
+        }
+        
+        // Commit transaction
+        $pdo->commit();
+        
+    } catch (Exception $e) {
+        // Rollback transaction on error
+        $pdo->rollBack();
+        $_SESSION['message'] = "Error processing task deletion.";
         $_SESSION['message_type'] = "error";
     }
     
@@ -58,7 +152,7 @@ if ($selectedCategory !== 'All') {
 // Get tasks with filtering
 $taskStmt = $pdo->prepare("
     SELECT * FROM tasks 
-    $whereClause
+    $whereClause AND status != 'deleted'
     ORDER BY deadline ASC
 ");
 $taskStmt->execute($params);
@@ -85,10 +179,11 @@ $taskStats = $statsStmt->fetchAll();
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Tasks - Task Manager</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="TaskList.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="themes.css">
 </head>
-<body>
+<body class="theme-<?php echo isset($_SESSION['theme']) ? $_SESSION['theme'] : 'light'; ?>">
     <div class="dashboard-container">
         <?php include 'sidebar.php'; ?>
         
@@ -165,6 +260,12 @@ $taskStats = $statsStmt->fetchAll();
                                     <a href="edit_task.php?id=<?php echo $task['id']; ?>" class="btn btn-primary">
                                         <i class="fas fa-edit"></i> Edit
                                     </a>
+                                    <form method="POST" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this task? You will lose 50 points!');">
+                                        <input type="hidden" name="task_id" value="<?php echo $task['id']; ?>">
+                                        <button type="submit" name="delete_task" class="btn btn-danger">
+                                            <i class="fas fa-trash"></i> Delete
+                                        </button>
+                                    </form>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -415,6 +516,15 @@ $taskStats = $statsStmt->fetchAll();
     background: #2980b9;
 }
 
+.btn-danger {
+    background: #e74c3c;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c0392b;
+}
+
 /* No Tasks Message */
 .no-tasks {
     text-align: center;
@@ -480,5 +590,7 @@ $taskStats = $statsStmt->fetchAll();
     background: #999;
 }
 </style>
+<script src="TaskList.js"></script>
+<script src="theme.js"></script>
 </body>
 </html>

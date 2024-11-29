@@ -43,3 +43,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+const Profile = () => {
+    const { user } = useContext(UserContext);
+    
+    return (
+      <div className="profile">
+        <h2>Profile</h2>
+        <div className="profile-stats">
+          <p>Total Points: {user.points}</p>
+          <p>Tasks Completed: {user.tasksCompleted || 0}</p>
+          {/* ... other profile information ... */}
+        </div>
+      </div>
+    );
+  };

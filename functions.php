@@ -294,4 +294,19 @@ function getTaskStats($pdo, $user_id) {
     }
 }
 
+// ==========================================
+// Points Functions
+// ==========================================
+
+function getUserPoints($pdo, $userId) {
+    try {
+        $stmt = $pdo->prepare("SELECT points FROM users WHERE id = ?");
+        $stmt->execute([$userId]);
+        return $stmt->fetchColumn() ?: 0;
+    } catch (PDOException $e) {
+        error_log("Error fetching user points: " . $e->getMessage());
+        return 0;
+    }
+}
+
 ?>
