@@ -17,12 +17,12 @@ class EmailService {
             $this->mailer->isSMTP();                                            
             $this->mailer->Host       = 'smtp.gmail.com';                     
             $this->mailer->SMTPAuth   = true;                                   
-            $this->mailer->Username   = 'your-actual-gmail@gmail.com';    // Replace with your Gmail     
-            $this->mailer->Password   = 'abcd efgh ijkl mnop';           // Replace with your 16-digit app password                               
+            $this->mailer->Username   = 'benardonyango@kabara.ac.ke';    // Replace with your Gmail     
+            $this->mailer->Password   = 'jtei isif rivz eeat';           // Replace with your 16-digit app password                               
             $this->mailer->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;            
             $this->mailer->Port       = 465;                                    
 
-            $this->mailer->setFrom('your-actual-gmail@gmail.com', 'Task Manager');
+            $this->mailer->setFrom('benardonyango@kabara.ac.ke', 'Task Manager');
             
         } catch (Exception $e) {
             error_log("Mailer Error: " . $e->getMessage());
