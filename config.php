@@ -4,6 +4,13 @@ $dbname = 'user_system';
 $username = 'root';
 $password = '';
 
+// Email Configuration
+define('SMTP_HOST', 'smtp.gmail.com');
+define('SMTP_USER', 'benardonyango@kabarak.ac.ke');
+define('SMTP_PASS', 'jtei isif rivz eeat');
+define('SMTP_PORT', 587);
+define('SMTP_FROM_EMAIL', 'benardonyango@kabarak.ac.ke');
+
 try {
     $pdo = new PDO(
         "mysql:host=$host;dbname=$dbname;charset=utf8mb4",
