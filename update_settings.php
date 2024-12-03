@@ -112,6 +112,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new Exception('Failed to update password');
             }
         }
+        // Add this to handle the account deletion
+        elseif (isset($_POST['password'])) {
+            try {
+                // Verify the password first
+                $stmt = $pdo->prepare("SELECT password FROM users WHERE id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+                $user = $stmt->fetch();
+
+                if (!$user || !password_verify($_POST['password'], $user['password'])) {
+                    echo json_encode(['success' => false, 'message' => 'Invalid password']);
+                    exit;
+                }
+
+                // Delete user data (you might want to add more tables if needed)
+                $stmt = $pdo->prepare("DELETE FROM users WHERE id = ?");
+                $stmt->execute([$_SESSION['user_id']]);
+
+                echo json_encode(['success' => true]);
+                exit;
+            } catch (PDOException $e) {
+                error_log("Database error: " . $e->getMessage());
+                echo json_encode(['success' => false, 'message' => 'Database error occurred']);
+                exit;
+            }
+        }
         else {
             error_log("Invalid request parameters received");
             throw new Exception('Invalid request parameters');

@@ -173,6 +173,9 @@ $baseUrl = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
 
             document.getElementById('notificationsToggle').addEventListener('change', toggleNotifications);
             document.getElementById('remindersToggle').addEventListener('change', toggleReminders);
+
+            // Add delete account form handler
+            document.getElementById('deleteForm').addEventListener('submit', handleDeleteAccount);
         });
 
         function showMessage(message, type = 'error') {
@@ -287,6 +290,41 @@ $baseUrl = rtrim(dirname($_SERVER['PHP_SELF']), '/\\');
             } catch (error) {
                 console.error('Error:', error);
                 document.getElementById('remindersToggle').checked = !document.getElementById('remindersToggle').checked;
+                showMessage(error.message);
+            }
+        }
+
+        async function handleDeleteAccount(event) {
+            event.preventDefault();
+            
+            if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const formData = new FormData(event.target);
+
+                const response = await fetch(`${BASE_URL}/update_settings.php`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage('Account deleted successfully. Redirecting...', 'success');
+                    setTimeout(() => {
+                        window.location.href = 'logout.php';
+                    }, 2000);
+                } else {
+                    throw new Error(data.message || 'Error deleting account');
+                }
+            } catch (error) {
+                console.error('Error:', error);
                 showMessage(error.message);
             }
         }
